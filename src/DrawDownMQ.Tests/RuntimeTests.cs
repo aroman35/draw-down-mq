@@ -53,7 +53,7 @@ public class RuntimeTests
             _loggerFactory.CreateLogger<IDrawDownMqListener>());
 
         await client.StartAsync(cancellationTokenSource.Token);
-        var testMessage = Encoding.UTF8.GetBytes("Hello my fucking world!");
+        var testMessage = Encoding.UTF8.GetBytes("I am a test message, beach!");
         await client.SendAsync(Guid.NewGuid(), testMessage, cancellationTokenSource.Token);
         await client.SendAsync(Guid.NewGuid(), testMessage, cancellationTokenSource.Token);
         await client.SendAsync(Guid.NewGuid(), testMessage, cancellationTokenSource.Token);
