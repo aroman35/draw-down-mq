@@ -21,8 +21,8 @@ jobs:
       with:
         dotnet-version: 6.0.x
     - name: Restore dependencies
-      run: dotnet restore ./src/DrawDownMq.Tests
+      run: dotnet restore ./src/DrawDownMQ.Tests
     - name: Build
-      run: dotnet build --configuration Release --no-restore ./src/DrawDownMq.Tests
+      run: dotnet build --configuration Release --no-restore ./src/DrawDownMQ.Tests
     - name: Test
-      run: dotnet test --no-build --verbosity normal ./src/DrawDownMq.Tests
+      run: dotnet test --no-build --verbosity normal ./src/DrawDownMQ.Tests
