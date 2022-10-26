@@ -25,6 +25,10 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore ./src/DrawDownMQ.Tests
     # - name: Test
-    #   run: dotnet test --no-build --verbosity normal ./src/DrawDownMQ.Tests
-    - name: Test
+    #   run: dotnet test --no-build --verbosity normal ./src
+  unit-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: run-tests
       run: dotnet test --no-build --verbosity normal ./src
