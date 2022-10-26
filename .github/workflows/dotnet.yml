@@ -22,9 +22,5 @@ jobs:
       run: dotnet restore ./src
     - name: Build
       run: dotnet build --no-restore ./src
-  unit-tests:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
     - name: run-tests
       run: dotnet test --no-build --verbosity normal ./src
