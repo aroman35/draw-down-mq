@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <ProjectReference Include="..\DrawDownMQ.Connection.Abstractions\DrawDownMQ.Connection.Abstractions.csproj" />
+        <ProjectReference Include="..\DrawDownMQ.Connection.Common\DrawDownMQ.Connection.Common.csproj" />
+    </ItemGroup>
+
+</Project>
