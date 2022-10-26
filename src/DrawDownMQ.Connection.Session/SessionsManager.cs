@@ -11,20 +11,14 @@ public class SessionsManager : ISessionsManager
 {
     private readonly ILogger _logger;
     private readonly ConcurrentDictionary<Guid, IDrawDownMqSession> _runningSessions;
-    private readonly ICompressionSwitcher _compressionSwitcher;
-    private readonly IHashSwitcher _hashSwitcher;
-    private readonly IEncryptionSwitcher _encryptionSwitcher;
+    private readonly IMessagePresentationBuilder _presentationBuilder;
 
     public SessionsManager(
-        ICompressionSwitcher compressionSwitcher,
-        IHashSwitcher hashSwitcher,
-        IEncryptionSwitcher encryptionSwitcher,
+        IMessagePresentationBuilder presentationBuilder,
         ILogger logger)
     {
         _logger = logger;
-        _hashSwitcher = hashSwitcher;
-        _encryptionSwitcher = encryptionSwitcher;
-        _compressionSwitcher = compressionSwitcher;
+        _presentationBuilder = presentationBuilder;
         _runningSessions = new ConcurrentDictionary<Guid, IDrawDownMqSession>();
     }
 
@@ -32,9 +26,7 @@ public class SessionsManager : ISessionsManager
     {
         var session = await DrawDownMqServerSession.Create(
             socket,
-            _compressionSwitcher,
-            _encryptionSwitcher,
-            _hashSwitcher,
+            _presentationBuilder,
             _logger,
             cancellationToken);
         
@@ -51,9 +43,7 @@ public class SessionsManager : ISessionsManager
         var session = await DrawDownMqClientSession.Create(
             serverEndpoint,
             sessionHeaders,
-            _compressionSwitcher,
-            _hashSwitcher,
-            _encryptionSwitcher,
+            _presentationBuilder,
             _logger,
             cancellationToken);
         

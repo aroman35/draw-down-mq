@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using DrawDownMQ.Connection.Abstractions;
 using DrawDownMQ.Connection.Common;
+using DrawDownMQ.Connection.Presentation;
 using DrawDownMQ.Connection.Presentation.Compression;
 using DrawDownMQ.Connection.Presentation.Encryption;
 using DrawDownMQ.Connection.Presentation.Hashing;
@@ -32,11 +33,14 @@ public class RuntimeTests
         var compressionSwitcher = new CompressionSwitcher();
         var encryptionSwitcher = new EncryptionSwitcher();
         var hashSwitcher = new HashSwitcher();
+        var presentationBuilder = new MessagePresentationBuilder(
+            compressionSwitcher,
+            encryptionSwitcher,
+            hashSwitcher,
+            _loggerFactory.CreateLogger<MessagePresentationBuilder>());
         
         var sessionManager = new SessionsManager(
-            compressionSwitcher,
-            hashSwitcher,
-            encryptionSwitcher,
+            presentationBuilder,
             _loggerFactory.CreateLogger<ISessionsManager>());
         
         var serverEndpoint = IPEndPoint.Parse("127.0.0.1:13000");
@@ -69,7 +73,8 @@ public class RuntimeTests
         {
             SessionHeader.ClientId(Guid.NewGuid()),
             SessionHeader.Compression(CompressionType.Gzip),
-            SessionHeader.ClientName("test")
+            SessionHeader.ClientName("test"),
+            SessionHeader.Encryption(EncryptionType.AES)
         };
 
         var headers = new SessionHeadersCollection(headersCollection);

@@ -14,10 +14,8 @@ public class DrawDownMqClientSession : DrawDownMqSession
         Socket socket,
         IPEndPoint serverEndpoint,
         SessionHeadersCollection sessionHeaders,
-        ICompressionSwitcher compressionSwitcher,
-        IHashSwitcher hashSwitcher,
-        IEncryptionSwitcher encryptionSwitcher,
-        ILogger logger) : base(socket, compressionSwitcher, encryptionSwitcher, hashSwitcher, logger)
+        IMessagePresentationBuilder presentationBuilder,
+        ILogger logger) : base(socket, presentationBuilder, logger)
     {
         SessionHeaders = sessionHeaders;
         _serverEndpoint = serverEndpoint;
@@ -26,9 +24,7 @@ public class DrawDownMqClientSession : DrawDownMqSession
     public static async Task<IDrawDownMqSession> Create(
         IPEndPoint serverEndpoint,
         SessionHeadersCollection sessionHeaders,
-        ICompressionSwitcher compressionSwitcher,
-        IHashSwitcher hashSwitcher,
-        IEncryptionSwitcher encryptionSwitcher,
+        IMessagePresentationBuilder presentationBuilder,
         ILogger logger,
         CancellationToken cancellationToken)
     {
@@ -37,9 +33,7 @@ public class DrawDownMqClientSession : DrawDownMqSession
             socket,
             serverEndpoint,
             sessionHeaders,
-            compressionSwitcher,
-            hashSwitcher,
-            encryptionSwitcher,
+            presentationBuilder,
             logger);
         
         await client.Connect(cancellationToken);

@@ -9,22 +9,18 @@ public class DrawDownMqServerSession : DrawDownMqSession
 {
     private DrawDownMqServerSession(
         Socket socket,
-        ICompressionSwitcher compressionSwitcher,
-        IEncryptionSwitcher encryptionSwitcher,
-        IHashSwitcher hashSwitcher,
-        ILogger logger) : base(socket, compressionSwitcher, encryptionSwitcher, hashSwitcher, logger)
+        IMessagePresentationBuilder presentationBuilder,
+        ILogger logger) : base(socket, presentationBuilder, logger)
     {
     }
 
     public static async Task<DrawDownMqServerSession> Create(
         Socket socket,
-        ICompressionSwitcher compressionSwitcher,
-        IEncryptionSwitcher encryptionSwitcher,
-        IHashSwitcher hashSwitcher,
+        IMessagePresentationBuilder presentationBuilder,
         ILogger logger,
         CancellationToken cancellationToken)
     {
-        var session = new DrawDownMqServerSession(socket, compressionSwitcher, encryptionSwitcher, hashSwitcher, logger);
+        var session = new DrawDownMqServerSession(socket, presentationBuilder, logger);
         await session.Connect(cancellationToken);
 
         return session;
