@@ -11,19 +11,11 @@ public interface IHashProvider
     }
     int HashSize { get; }
 
-    unsafe bool CompareHash(Span<byte> message, Span<byte> hash)
+    bool CompareHash(ReadOnlySpan<byte> message, ReadOnlySpan<byte> hash)
     {
         Span<byte> computedHash = stackalloc byte[HashSize];
         ComputeHash(message, computedHash);
-        fixed (byte* computedPtr = computedHash)
-        {
-            for (var i = 0; i < HashSize; i++)
-            {
-                if (computedPtr[i] != hash[i])
-                    return false;
-            }
-        }
-        return true;
+        return computedHash.SequenceEqual(hash);
     }
-    void ComputeHash(Span<byte> message, Span<byte> hashBuffer);
+    void ComputeHash(ReadOnlySpan<byte> message, Span<byte> hashBuffer);
 }

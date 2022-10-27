@@ -25,6 +25,7 @@ public class RuntimeTests
             l.AddProvider(new XunitLoggerProvider(testOutputHelper));
         });
     }
+    
     [Fact]
     public async Task SimpleMessageRpc()
     {
@@ -54,11 +55,9 @@ public class RuntimeTests
             _loggerFactory.CreateLogger<IDrawDownMqListener>());
 
         await client.StartAsync(cancellationTokenSource.Token);
-        var testMessage = Encoding.UTF8.GetBytes("I am a test message, beach!");
-        await client.SendAsync(Guid.NewGuid(), testMessage, cancellationTokenSource.Token);
-        await client.SendAsync(Guid.NewGuid(), testMessage, cancellationTokenSource.Token);
-        await client.SendAsync(Guid.NewGuid(), testMessage, cancellationTokenSource.Token);
-        await client.SendAsync(Guid.NewGuid(), testMessage, cancellationTokenSource.Token);
+        await client.SendAsync(Guid.NewGuid(), await DataLoader.ReadSampleShort(), cancellationTokenSource.Token);
+        await client.SendAsync(Guid.NewGuid(), await DataLoader.ReadSampleLong(), cancellationTokenSource.Token);
+        await client.SendAsync(Guid.NewGuid(), await DataLoader.ReadSampleJson(), cancellationTokenSource.Token);
         await Task.Delay(1000, cancellationTokenSource.Token);
         cancellationTokenSource.Cancel();
         await serverRuntime;
@@ -69,7 +68,7 @@ public class RuntimeTests
         var headersCollection = new List<SessionHeader>
         {
             SessionHeader.ClientId(Guid.NewGuid()),
-            SessionHeader.Compression(CompressionType.Gzip),
+            SessionHeader.Compression(CompressionType.Brotli),
             SessionHeader.ClientName("test"),
             SessionHeader.Hash(HashType.SHA512)
         };
@@ -91,23 +90,6 @@ public class RuntimeTests
             var hashMatch = await hashProvider.CompareHashAsync(message, hash, CancellationToken.None);
             Assert.True(hashMatch);
             Assert.Equal(hash.Length, hashProvider.HashSize);
-        }
-    }
-    
-
-    [Fact]
-    public async Task CompressionTests()
-    {
-        var compressionSwitcher = new CompressionSwitcher();
-        var message = Encoding.UTF8.GetBytes("I am a test message, beach!");
-        
-        foreach (var compressionType in Enum.GetValues<CompressionType>())
-        {
-            var compressionProvider = compressionSwitcher.Create(compressionType);
-            var compressedMessage = await compressionProvider.Compress(message, CancellationToken.None);
-            var decompressed = await compressionProvider.Decompress(compressedMessage, CancellationToken.None);
-            
-            Assert.True(message.SequenceEqual(decompressed));
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Net.Sockets;
 using DrawDownMQ.Connection.Abstractions;
 using DrawDownMQ.Connection.Common;
@@ -12,6 +13,7 @@ public abstract class DrawDownMqSession : IDrawDownMqSession
     private protected readonly Socket Socket;
     private protected readonly ILogger Logger;
     private protected SessionHeadersCollection SessionHeaders;
+    private readonly MemoryPool<byte> _memoryPool;
 
     private IMessagePresentation _messagePresentation;
 
@@ -25,6 +27,7 @@ public abstract class DrawDownMqSession : IDrawDownMqSession
         Socket = socket;
         Logger = logger;
         _presentationBuilder = presentationBuilder;
+        _memoryPool = MemoryPool<byte>.Shared;
     }
 
     public abstract Task Connect(CancellationToken cancellationToken);
@@ -50,13 +53,12 @@ public abstract class DrawDownMqSession : IDrawDownMqSession
         }
     }
 
-    public async Task Send(Guid key, byte[] value, CancellationToken cancellationToken)
+    public async Task Send(Guid key, Memory<byte> value, CancellationToken cancellationToken)
     {
-        var message = await _messagePresentation.BuildMessage(key, value, cancellationToken);
-        
-        await Socket.SendAsync(message, SocketFlags.None, cancellationToken);
-        if (Logger.IsEnabled(LogLevel.Trace))
-            Logger.LogTrace("Message with {MessageLength} bytes was sent", message.Length);
+        var messageSize = _messagePresentation.ApproximateMessageSize(value.Length);
+        var buffer = _memoryPool.Rent(messageSize);
+        var fullLength = _messagePresentation.BuildMessage(key, value, buffer.Memory);
+        await Socket.SendAsync(buffer.Memory[..fullLength], SocketFlags.None, cancellationToken);
     }
 
     private protected void SetServicesFromHeaders()
@@ -77,5 +79,6 @@ public abstract class DrawDownMqSession : IDrawDownMqSession
     public virtual void Dispose()
     {
         Socket?.Dispose();
+        _memoryPool.Dispose();
     }
 }

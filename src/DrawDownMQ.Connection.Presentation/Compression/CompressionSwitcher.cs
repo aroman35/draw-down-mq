@@ -9,7 +9,7 @@ public class CompressionSwitcher : ICompressionSwitcher
     {
         return compressionType switch
         {
-            CompressionType.Gzip => new GzipCompressionProvider(),
+            CompressionType.Brotli => new BrotliCompressionProvider(),
             CompressionType.None => new NoneCompressionProvider(),
             _ => new NoneCompressionProvider()
         };

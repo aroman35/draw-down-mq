@@ -15,7 +15,7 @@ public class Sha512HashProvider : IHashProvider
 
     public int HashSize => 512 / 8;
 
-    public void ComputeHash(Span<byte> message, Span<byte> hashBuffer)
+    public void ComputeHash(ReadOnlySpan<byte> message, Span<byte> hashBuffer)
     {
         using var sha = SHA512.Create();
         sha.TryComputeHash(message, hashBuffer, out _);

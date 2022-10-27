@@ -29,50 +29,41 @@ public class MessagePresentation : IMessagePresentation
         _applicationContext = new TestContext(_logger);
     }
 
-    public async Task<byte[]> BuildMessage(Guid key, byte[] message, CancellationToken cancellationToken)
+    public int ApproximateMessageSize(int messageLength)
+    {
+        return messageLength + 2 * IntLength + KeyLength + _hashProvider.HashSize;
+    }
+    
+    public int BuildMessage(Guid key, Memory<byte> message, Memory<byte> output)
     {
         try
         {
-            var keyBytes = key.ToByteArray();
-            var hash = await _hashProvider.GetHash(message, cancellationToken);
-            var compressedMessage = await _compressionProvider.Compress(message, cancellationToken);
-            var compressedLength = BitConverter.GetBytes(compressedMessage.Length);
-            var messageLength = BitConverter.GetBytes(message.Length);
+            using var pool = MemoryPool<byte>.Shared;
+            Span<byte> keyBytes = key.ToByteArray();
+            var hash = pool.Rent(_hashProvider.HashSize).Memory[.._hashProvider.HashSize];
+            _hashProvider.ComputeHash(message.Span, hash.Span);
+            var compressionBuffer = pool.Rent(message.Length);
+            var compressedMessageLength = _compressionProvider.Compress(message.Span, compressionBuffer.Memory.Span);
+            Span<byte> compressedLength = BitConverter.GetBytes(compressedMessageLength);
+            Span<byte> messageLength = BitConverter.GetBytes(message.Length);
 
-            var fullLength = KeyLength + compressedMessage.Length + IntLength * 2 + _hashProvider.HashSize;
-            var resultMessage = new byte[fullLength];
+            var fullLength = KeyLength + compressedMessageLength + IntLength * 2 + _hashProvider.HashSize;
 
             var bytesWrote = 0;
-            for (var i = 0; i < KeyLength; i++)
-            {
-                resultMessage[i] = keyBytes[i];
-            }
-
+            keyBytes.CopyTo(output.Span, bytesWrote);
             bytesWrote += KeyLength;
-            for (var i = 0; i < IntLength; i++)
-            {
-                resultMessage[i + bytesWrote] = compressedLength[i];
-            }
+            compressedLength.CopyTo(output.Span, bytesWrote);
             bytesWrote += IntLength;
-
-            for (var i = 0; i < IntLength; i++)
-            {
-                resultMessage[i + bytesWrote] = messageLength[i];
-            }
+            messageLength.CopyTo(output.Span, bytesWrote);
             bytesWrote += IntLength;
+            compressionBuffer.Memory.Span[..compressedMessageLength].CopyTo(output.Span, bytesWrote);
+            bytesWrote += compressedMessageLength;
+            hash.Span.CopyTo(output.Span, bytesWrote);
+            
+            if (_logger.IsEnabled(LogLevel.Trace))
+                _logger.LogTrace("Message with {Length} bytes was built", fullLength);
 
-            for (var i = 0; i < compressedMessage.Length; i++)
-            {
-                resultMessage[i + bytesWrote] = compressedMessage[i];
-            }
-            bytesWrote += compressedMessage.Length;
-
-            for (var i = 0; i < _hashProvider.HashSize; i++)
-            {
-                resultMessage[i + bytesWrote] = hash[i];
-            }
-
-            return resultMessage;
+            return fullLength;
         }
         catch (Exception exception)
         {
@@ -83,12 +74,13 @@ public class MessagePresentation : IMessagePresentation
 
     public async Task ReceiveMessage(CancellationToken cancellationToken)
     {
-        
         var available = _socket.Available;
         if (available == 0)
             return;
         var buffer = MemoryPool<byte>.Shared.Rent(available);
         var messageSizeBytesRead = await _socket.ReceiveAsync(buffer.Memory, SocketFlags.None, cancellationToken);
+        if (_logger.IsEnabled(LogLevel.Trace))
+            _logger.LogTrace("Received {Length} bytes", messageSizeBytesRead);
         var bytesHandled = 0;
         var messagesRead = 0;
         while (bytesHandled < messageSizeBytesRead)
@@ -111,7 +103,7 @@ public class MessagePresentation : IMessagePresentation
             bytesHandled += _hashProvider.HashSize;
             
             var messageBuffer = MemoryPool<byte>.Shared.Rent(decompressedMessageLength);
-            await _compressionProvider.Decompress(compressedMessage, messageBuffer.Memory, cancellationToken);
+            _compressionProvider.Decompress(compressedMessage.Span, messageBuffer.Memory.Span);
             var decompressedMessage = messageBuffer.Memory[..decompressedMessageLength];
 
             var isHashCorrect = _hashProvider.CompareHash(decompressedMessage.Span, hash.Span);

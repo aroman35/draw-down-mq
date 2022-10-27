@@ -32,4 +32,16 @@
       <ProjectReference Include="..\DrawDownMQ.Connection.Transport\DrawDownMQ.Connection.Transport.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="rawData\sample_1.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="rawData\sample_2.txt">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="rawData\sample_3.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

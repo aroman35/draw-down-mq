@@ -2,6 +2,7 @@ namespace DrawDownMQ.Connection.Abstractions;
 
 public interface IMessagePresentation
 {
-    Task<byte[]> BuildMessage(Guid key, byte[] message, CancellationToken cancellationToken);
+    int BuildMessage(Guid key, Memory<byte> message, Memory<byte> output);
     Task ReceiveMessage(CancellationToken cancellationToken);
+    int ApproximateMessageSize(int messageLength);
 }

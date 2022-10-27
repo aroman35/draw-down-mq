@@ -1,0 +1,3 @@
+Brotli is a lossless data compression algorithm developed by Google. It uses a combination of the general-purpose LZ77 lossless compression algorithm, Huffman coding and 2nd order context modelling.
+
+Brotli is primarily used by web servers and content delivery networks to compress HTTP content, making internet websites load faster. A successor to gzip, it is supported by all major web browsers and has become increasingly popular, as it provides better compression than gzip.
