@@ -14,4 +14,9 @@ public class Sha384HashProvider : IHashProvider
     }
 
     public int HashSize => 384 / 8;
+    public void ComputeHash(Span<byte> message, Span<byte> hashBuffer)
+    {
+        using var sha = SHA384.Create();
+        sha.TryComputeHash(message, hashBuffer, out _);
+    }
 }

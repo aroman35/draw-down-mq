@@ -13,4 +13,14 @@ public class NoneCompressionProvider : ICompressionProvider
     {
         return Task.FromResult(compressedMessage);
     }
+
+    public async Task Decompress(Memory<byte> sourceMessage, Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Decompress(ReadOnlySpan<byte> compressed, Span<byte> buffer)
+    {
+        throw new NotImplementedException();
+    }
 }

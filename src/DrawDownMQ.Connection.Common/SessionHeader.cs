@@ -6,7 +6,6 @@ public struct SessionHeader
 {
     public const string MaxLengthHeader = "MAX-LENGTH";
     public const string CompressionHeader = "COMPRESSION";
-    public const string EncryptionHeader = "ENCRYPTION";
     public const string HashingTypeHeader = "HASHING-TYPE";
     public const string ClientIdHeader = "CLIENT-ID";
     public const string ClientNameHeader = "CLIENT-NAME";
@@ -34,7 +33,6 @@ public struct SessionHeader
 
     public static SessionHeader MaxLength(int maxMessageLength) => new(MaxLengthHeader, maxMessageLength.ToString());
     public static SessionHeader Compression(CompressionType compression) => new(CompressionHeader, compression.ToString());
-    public static SessionHeader Encryption(EncryptionType encryption) => new(EncryptionHeader, encryption.ToString());
     public static SessionHeader Hash(HashType hashType) => new(HashingTypeHeader, hashType.ToString());
     public static SessionHeader ClientId(Guid clientId) => new(ClientIdHeader, clientId.ToString());
     public static SessionHeader ClientName(string clientName) => new(ClientNameHeader, clientName);

@@ -14,4 +14,9 @@ public class Sha256HashProvider : IHashProvider
     }
 
     public int HashSize => 256 / 8;
+    public void ComputeHash(Span<byte> message, Span<byte> hashBuffer)
+    {
+        using var sha = SHA256.Create();
+        sha.TryComputeHash(message, hashBuffer, out _);
+    }
 }

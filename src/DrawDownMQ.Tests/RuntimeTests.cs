@@ -4,7 +4,6 @@ using DrawDownMQ.Connection.Abstractions;
 using DrawDownMQ.Connection.Common;
 using DrawDownMQ.Connection.Presentation;
 using DrawDownMQ.Connection.Presentation.Compression;
-using DrawDownMQ.Connection.Presentation.Encryption;
 using DrawDownMQ.Connection.Presentation.Hashing;
 using DrawDownMQ.Connection.Session;
 using DrawDownMQ.Connection.Transport;
@@ -31,11 +30,9 @@ public class RuntimeTests
     {
         using var cancellationTokenSource = new CancellationTokenSource();
         var compressionSwitcher = new CompressionSwitcher();
-        var encryptionSwitcher = new EncryptionSwitcher();
         var hashSwitcher = new HashSwitcher();
         var presentationBuilder = new MessagePresentationBuilder(
             compressionSwitcher,
-            encryptionSwitcher,
             hashSwitcher,
             _loggerFactory.CreateLogger<MessagePresentationBuilder>());
         
@@ -74,7 +71,7 @@ public class RuntimeTests
             SessionHeader.ClientId(Guid.NewGuid()),
             SessionHeader.Compression(CompressionType.Gzip),
             SessionHeader.ClientName("test"),
-            SessionHeader.Encryption(EncryptionType.AES)
+            SessionHeader.Hash(HashType.SHA512)
         };
 
         var headers = new SessionHeadersCollection(headersCollection);
@@ -91,27 +88,12 @@ public class RuntimeTests
         {
             var hashProvider = hashSwitcher.Create(hashType);
             var hash = await hashProvider.GetHash(message, CancellationToken.None);
-            var hashMatch = await hashProvider.CompareHash(message, hash, CancellationToken.None);
+            var hashMatch = await hashProvider.CompareHashAsync(message, hash, CancellationToken.None);
             Assert.True(hashMatch);
             Assert.Equal(hash.Length, hashProvider.HashSize);
         }
     }
-
-    [Fact]
-    public async Task EncryptionTests()
-    {
-        var encryptionSwitcher = new EncryptionSwitcher();
-        var message = Encoding.UTF8.GetBytes("I am a test message, beach!");
-        
-        foreach (var encryptionType in Enum.GetValues<EncryptionType>())
-        {
-            var encryptionProvider = encryptionSwitcher.Create(encryptionType);
-            var encrypted = await encryptionProvider.Encrypt(message, CancellationToken.None);
-            var decrypted = await encryptionProvider.Decrypt(encrypted, CancellationToken.None);
-            
-            Assert.True(message.SequenceEqual(decrypted));
-        }
-    }
+    
 
     [Fact]
     public async Task CompressionTests()

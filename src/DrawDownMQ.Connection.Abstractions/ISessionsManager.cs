@@ -11,4 +11,6 @@ public interface ISessionsManager : IDisposable
     Task<IDrawDownMqSession> CreateClient(IPEndPoint serverEndpoint,
         SessionHeadersCollection sessionHeaders,
         CancellationToken cancellationToken);
+
+    IDrawDownMqSession GetSession(Guid sessionId);
 }

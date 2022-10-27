@@ -50,7 +50,14 @@ public class SessionsManager : ISessionsManager
         _runningSessions[session.SessionId] = session;
         return session;
     }
-    
+
+    public IDrawDownMqSession GetSession(Guid sessionId)
+    {
+        if (!_runningSessions.TryGetValue(sessionId, out var session))
+            throw new ArgumentException($"Session {sessionId} was not found");
+        return session;
+    }
+
     public void Dispose()
     {
         foreach (var drawDownMqSession in _runningSessions.Values)

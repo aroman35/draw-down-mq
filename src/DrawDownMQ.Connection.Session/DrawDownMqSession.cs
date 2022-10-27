@@ -1,5 +1,4 @@
 using System.Net.Sockets;
-using System.Text;
 using DrawDownMQ.Connection.Abstractions;
 using DrawDownMQ.Connection.Common;
 using Microsoft.Extensions.Logging;
@@ -8,7 +7,6 @@ namespace DrawDownMQ.Connection.Session;
 
 public abstract class DrawDownMqSession : IDrawDownMqSession
 {
-    private const int KeySize = 16;
     private readonly IMessagePresentationBuilder _presentationBuilder;
     
     private protected readonly Socket Socket;
@@ -33,15 +31,22 @@ public abstract class DrawDownMqSession : IDrawDownMqSession
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            var keyBuffer = new byte[KeySize];
-            var bytesReceived = await Socket.ReceiveAsync(keyBuffer, SocketFlags.None, cancellationToken);
-            if (bytesReceived == KeySize)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                var messageReceived = await _messagePresentation.ReceiveMessage(cancellationToken);
-                Logger.LogInformation("Received message {Message}", Encoding.UTF8.GetString(messageReceived));
+                if (Socket.Available !=0)
+                {
+                    await _messagePresentation.ReceiveMessage(cancellationToken);
+                }
+
+                await Task.Delay(1, cancellationToken);
             }
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Error listening socket");
+            throw;
         }
     }
 
@@ -58,17 +63,13 @@ public abstract class DrawDownMqSession : IDrawDownMqSession
     {
         var _ = SessionHeaders.Headers.TryGetValue(SessionHeader.CompressionHeader, out var compressionValue)
                 & Enum.TryParse<CompressionType>(compressionValue, true, out var compressionType);
-
-        _ = SessionHeaders.Headers.TryGetValue(SessionHeader.EncryptionHeader, out var encryptionValue)
-            & Enum.TryParse<EncryptionType>(encryptionValue, true, out var encryptionType);
-
+        
         _ = SessionHeaders.Headers.TryGetValue(SessionHeader.HashingTypeHeader, out var hashingValue)
             & Enum.TryParse<HashType>(hashingValue, true, out var hashingType);
 
         _messagePresentation = _presentationBuilder.Build(Socket, options =>
         {
             options.CompressionType = compressionType;
-            options.EncryptionType = encryptionType;
             options.HashType = hashingType;
         });
     }
